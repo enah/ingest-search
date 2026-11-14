@@ -23,4 +23,4 @@ Duplicates are identified when two items have identical geometry. This is is det
 If files are larger, they may have to be processed in chunks. Support asynchronous upload with event-driven architecture. The rtree for search is built in memeory, so a different technology will need to be used (pgSTAC).
 
 ## Time taken
-4 hours (so far)
+5 hours
