@@ -11,6 +11,7 @@ import pystac
 import csv
 import os
 import sys
+import shutil
 
 now = datetime.now()
 
@@ -249,7 +250,8 @@ class Ingest:
         return "Success"
 
     def copy_to_storage(self, file_path, storage_path):
-        pass # implement later
+        Path(storage_path).mkdir(parents=True, exist_ok=True)
+        shutil.copy(file_path, storage_path)
 
 if __name__ == "__main__":
     root_path="dx-pipeline-assignment/files/"
