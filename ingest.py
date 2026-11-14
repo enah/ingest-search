@@ -46,10 +46,21 @@ class Ingest:
         return None
         
     def validate_csv(self, file_path):
-        pass
-        
+        with open(file_path, 'r', encoding='utf-8') as f:
+            first_line = next(f, None)
+            if first_line.strip() != "point_id,lat,lon,displacement_mm,velocity_mm_yr,measured_at":
+                return "Rejected: wrong header"
+            if not next(f, None):
+                return "Rejected: no data"
+        return None
+    
     def validate_geojson(self, file_path):
-        pass
+        try:
+            with open(file_path, 'r', encoding='utf-8') as f:
+                json.load(f)
+            return None
+        except (json.JSONDecodeError, FileNotFoundError):
+            return "Rejected: file is not valid json"
 
     def ingest(self, file_path, metadata):
         # validate metadata
