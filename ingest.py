@@ -9,6 +9,8 @@ from shapely.geometry import shape, MultiPolygon, MultiPoint, mapping, box
 from shapely.ops import unary_union
 import pystac
 import csv
+import os
+import sys
 
 now = datetime.now()
 
