@@ -110,26 +110,50 @@ class Ingest:
         return "Success"
         
     def create_stac_item(self, geom_mapping, bbox, timestamps, metadata):
-        start_time = min(timestamps)
-        end_time = max(timestamps)
+        dt = None
+        start_dt = None
+        end_dt = None
+        if timestamps and min(timestamps) == max(timestamps):
+            dt = min(timestamps)
+        elif timestamps:
+            start_dt = min(timestamps)
+            end_dt = max(timestamps)
+        elif metadata.datetime:
+            dt = metadata.datetime
+        else:
+            print("Warn: datetime data missing, using current datetime")
+            dt = datetime.now()
         
         geom_string = json.dumps(geom_mapping, sort_keys=True)
         NAMESPACE_STAC = uuid.NAMESPACE_URL
         item_id = str(uuid.uuid5(NAMESPACE_STAC, geom_string))
         
-        item = pystac.Item(
-            id=item_id,
-            geometry=geom_mapping,
-            bbox=bbox,
-            datetime=None,  # Set to None when using start/end intervals
-            properties={
-                "start_datetime": start_time.isoformat(),
-                "end_datetime": end_time.isoformat(),
-                "product_type": metadata.product_type,
-                "classification": metadata.classification,
-                "contract_id": metadata.contract_id
-            }
-        )
+        if dt:
+            item = pystac.Item(
+                id=item_id,
+                geometry=geom_mapping,
+                bbox=bbox,
+                datetime=dt,
+                properties={
+                    "product_type": metadata.product_type,
+                    "classification": metadata.classification,
+                    "contract_id": metadata.contract_id
+                }
+            )
+        else:
+            item = pystac.Item(
+                id=item_id,
+                geometry=geom_mapping,
+                bbox=bbox,
+                datetime=None,  # Set to None when using start/end intervals
+                properties={
+                    "start_datetime": start_dt.isoformat(),
+                    "end_datetime": end_dt.isoformat(),
+                    "product_type": metadata.product_type,
+                    "classification": metadata.classification,
+                    "contract_id": metadata.contract_id
+                }
+            )
         
         return item
         
