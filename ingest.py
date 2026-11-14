@@ -243,7 +243,7 @@ class Ingest:
             print(f"Loaded existing STAC catalog from {self.catalog_dir}")
         
         # Check if the item is already added to avoid duplicates
-        existing_item = catalog.get_item(item.id, recursive=False)
+        existing_item = next(catalog.get_items(item.id, recursive=False), None)
         if existing_item is not None:
             print(f"Item '{item.id}' already existed in catalog.")
             return

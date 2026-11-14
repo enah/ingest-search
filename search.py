@@ -24,7 +24,7 @@ class Search:
 
     def _build_index(self, catalog: pystac.Catalog):
         counter = 0
-        for item in catalog.get_all_items():
+        for item in catalog.get_items(recursive=True):
             # 1. Extract Bounding Box [minx, miny, maxx, maxy]
             bbox = item.bbox
             if not bbox or len(bbox) != 4:
