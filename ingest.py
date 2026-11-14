@@ -250,3 +250,24 @@ class Ingest:
         pass # implement later
 
 if __name__ == "__main__":
+    root_path="dx-pipeline-assignment/files/"
+    uploads_json="dx-pipeline-assignment/uploads.json"
+    catalog_path="catalog/"
+    if len(sys.argv) >= 4:
+        uploads_json = sys.argv[1]
+        root_path = sys.argv[2]
+        catalog_path = sys.argv[3]
+    ingestion = Ingest(catalog_path)
+    with open(uploads_json, 'r', encoding='utf-8') as file:
+        uploads = json.load(file)
+    for upload in uploads:
+        metadata = Metadata(
+            product_type=upload["product_type"],
+            classification=upload["classification"],
+            contract_id=upload["contract_id"],
+            datetime=upload.get("datetime")
+        )
+        try:
+            print(upload["file"] + " " + ingestion.ingest(root_path+upload["file"], metadata))
+        except Exception as e:
+            print(f"Error ingesting {upload['file']}: {e}")
