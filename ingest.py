@@ -87,6 +87,8 @@ class Ingest:
             return "Rejected: unknown product_type"
             
         # open catalog if exists, store in catalog
+        if not self.store_stac_item(item):
+            return "Rejected: duplicate"
         
         # copy file to storage path
         self.copy_to_storage(file_path, storage_path)
@@ -194,6 +196,55 @@ class Ingest:
         )
     
         return item
+        
+    def store_stac_item(
+            self,
+            item: pystac.Item,
+            catalog_id: str = "stac-catalog",
+            catalog_description: str = "STAC Catalog root"
+        ) -> str:
+        """Stores a STAC item in a catalog, initializing the catalog if it does not exist.
+    
+        Args:
+            item: The pystac.Item instance to store.
+            catalog_id: ID for the catalog if it needs to be initialized.
+            catalog_description: Description for the catalog if it needs to be initialized.
+        
+        Returns:
+        Success str if success.
+        """
+        catalog_file = os.path.join(self.catalog_dir, "catalog.json")
+        
+        # Initialize catalog if it doesn't exist
+        if not os.path.exists(catalog_file):
+            os.makedirs(self.catalog_dir, exist_ok=True)
+            catalog = pystac.Catalog(
+                id=catalog_id,
+                description=catalog_description
+            )
+            print(f"Initialized new STAC catalog at {self.catalog_dir}")
+        else:
+            # Load existing catalog
+            catalog = pystac.Catalog.from_file(catalog_file)
+            print(f"Loaded existing STAC catalog from {self.catalog_dir}")
+        
+        # Check if the item is already added to avoid duplicates
+        existing_item = catalog.get_item(item.id, recursive=False)
+        if existing_item is not None:
+            print(f"Item '{item.id}' already existed in catalog.")
+            return
+
+        # Add the item to the catalog
+        catalog.add_item(item)
+    
+        # Normalize hrefs to ensure self-contained relative paths
+        catalog.normalize_hrefs(self.catalog_dir)
+    
+        # Save the catalog and all modified/new items
+        catalog.save(catalog_type=pystac.CatalogType.SELF_CONTAINED)
+        print(f"Successfully stored item '{item.id}' in catalog at {self.catalog_dir}")
+    
+        return "Success"
 
     def copy_to_storage(self, file_path, storage_path):
         pass # implement later
