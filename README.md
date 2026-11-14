@@ -19,6 +19,8 @@ If metadata disagrees with the file, the file is rejected. This is to make sure 
 
 Duplicates are identified when two items have identical geometry. This is is detected by generating uuid deterministically from serialized geometry.
 
-Things to change when running in production with many teams and larger files: If files are larger, they may have to be processed in chunks. Support asynchronous upload with event-driven architecture. The rtree for search is built in memeory, so a different technology will need to be used (pgSTAC).
+## Things to change when running in production with many teams and larger files
+If files are larger, they may have to be processed in chunks. Support asynchronous upload with event-driven architecture. The rtree for search is built in memeory, so a different technology will need to be used (pgSTAC).
 
+## Time taken
 4 hours (so far)
