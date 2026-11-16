@@ -100,6 +100,9 @@ class Ingest:
         else:
             return "Rejected: unknown product_type"
             
+        if not item:
+            return "Rejected: no valid data"
+            
         # open catalog if exists, store in catalog
         if not self.store_stac_item(item):
             return "Rejected: duplicate"
@@ -168,13 +171,22 @@ class Ingest:
         with open(csv_file, mode="r", encoding="utf-8") as f:
             reader = csv.DictReader(f)
             for row in reader:
-                # skip row if invalid
-                lon = float(row["lon"])
-                lat = float(row["lat"])
-                points.append((lon, lat))
-                longitudes.append(lon)
-                latitudes.append(lat)
-                timestamps.append(datetime.fromisoformat(row["measured_at"].replace("Z", "+00:00")))
+                try:
+                    # Attempt parsing coordinates and timestamps
+                    lon = float(row["lon"])
+                    lat = float(row["lat"])
+                    ts_str = row["measured_at"].replace("Z", "+00:00")
+                    dt = datetime.fromisoformat(ts_str)
+                
+                    points.append((lon, lat))
+                    longitudes.append(lon)
+                    latitudes.append(lat)
+                    timestamps.append(dt)
+                except (ValueError, KeyError) as e:
+                    print(f"Skipping invalid row: {row}")
+                    
+        if not points:
+            return None
 
         # 2. Construct GeoJSON MultiPoint geometry
         multipoint_geom = MultiPoint(points)
@@ -203,9 +215,25 @@ class Ingest:
         # 1. Load the GeoJSON FeatureCollection
         with open(geojson_file, "r") as f:
             fc = json.load(f)
+            
+        valid_features = []
+            
+        for idx, feature in enumerate(fc.get("features", [])):
+            try:
+                # Validate geometry can be built
+                geom = shape(feature["geometry"])
+                if geom.is_empty or not geom.is_valid:
+                    raise ValueError("Invalid or empty geometry")
+            
+                valid_features.append(feature)
+            except Exception as e:
+                print(f"Skipping invalid feature")
+
+        if not valid_features:
+            return None  # All features failed validation
 
         # 2. Extract and union all geometries
-        geometries = [shape(feature["geometry"]) for feature in fc["features"]]
+        geometries = [shape(feature["geometry"]) for feature in valid_features]
         combined_geom = unary_union(geometries)
 
         # Ensure it's treated as a MultiPolygon correctly
